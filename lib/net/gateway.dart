@@ -6,43 +6,78 @@ import 'package:http/http.dart' as http;
 
 const SIGNATURE_TIMESTAMP_TOLERANCE_GW = 60 * 60 * 2; // 2h
 
-/// Enumerates the API's available to the protocol
-class DVoteApiList {
-  static const file = <String>[
-    "fetchFile",
-    "addFile",
-    "pinList",
-    "pinFile",
-    "unpinFile"
-  ];
-  static const vote = <String>[
-    "submitEnvelope",
-    "getEnvelopeStatus",
-    "getEnvelope",
-    "getEnvelopeHeight",
-    "getProcessKeys",
-    "getProcessList",
-    "getEnvelopeList",
-    "getBlockHeight",
-    "getBlockStatus",
-    "submitRawTx"
-  ];
-  static const census = <String>[
-    "addCensus",
-    "addClaim",
-    "addClaimBulk",
-    "getRoot",
-    "genProof",
-    "getSize",
-    "checkProof",
-    "dump",
-    "dumpPlain",
-    "importDump",
-    "publish",
-    "importRemote",
-    "getCensusList"
-  ];
-  static const results = <String>["getResults", "getEntityList"];
+/// Contains the status information of a vocdoni-node gateway
+class DVoteGatewayStatus {
+  int health;
+  List<String> supportedApis;
+  bool isUp;
+  DVoteGatewayStatus(this.isUp, this.health, this.supportedApis);
+}
+
+class VochainStats {
+  int blockHeight;
+  int entityCount;
+  int envelopeCount;
+  int processCount;
+  int transactionCount;
+  int validatorCount;
+  List<int> blockTime;
+  int blockTimeStamp;
+  String chainId;
+  String genesisTimeStamp;
+  bool syncing;
+
+  VochainStats({
+    this.blockHeight = 0,
+    this.entityCount = 0,
+    this.envelopeCount = 0,
+    this.processCount = 0,
+    this.transactionCount = 0,
+    this.validatorCount = 0,
+    required this.blockTime,
+    this.blockTimeStamp = 0,
+    this.chainId = "",
+    this.genesisTimeStamp = "",
+    this.syncing = false,
+  });
+}
+
+class VochainProcess {
+  String id;
+  String entityId;
+  // int entityIndex;
+  // int startBlock;
+  // int endBlock;
+  // int rheight;
+  // String censusRoot;
+  // String censusUri;
+  String metadata;
+  int censusOrigin;
+  int status;
+  // int namespace;
+  // Map<String, dynamic> envelope;
+  // Map<String, dynamic> mode;
+  // Map<String, dynamic> voteOpts;
+  // List<String> privateKeys;
+  // List<String> publicKeys;
+  // int questionIndex;
+  String creationTime;
+  bool haveResults;
+  bool finalResults;
+  int sourceBlockHeight;
+  String sourceNetworkId;
+
+  VochainProcess(
+      {this.id = "",
+      this.entityId = "",
+      this.metadata = "",
+      this.censusOrigin = 0,
+      this.status = 0,
+      this.creationTime = "",
+      this.haveResults = false,
+      this.finalResults = false,
+      this.sourceBlockHeight = 0,
+      this.sourceNetworkId = ""});
 }
 
 /// Client class to send HTTP requests to a DVote Gateway
@@ -161,80 +196,6 @@ class DVoteGateway {
 
     comp.complete(jsonResponse);
   }
-
-  /// Calls `getInfo` on the current node and updates the internal state.
-  Future<void> updateStatus({int timeout = 6}) {
-    return DVoteGateway.getStatus(this._gatewayUri, timeout: timeout)
-        .then((result) {
-      if (result.isUp != true) throw Exception("The gateway is down");
-
-      this._health = result.health;
-      this._supportedApis = result.supportedApis;
-    });
-  }
-
-  /// Calls `getInfo` on the current node.
-  static Future<DVoteGatewayStatus> getStatus(String gatewayUri,
-      {int timeout = 6}) async {
-    final req = {"method": "getInfo", "timestamp": getTimestampForGateway()};
-    return DVoteGateway(gatewayUri)
-        .sendRequest(req, timeout: timeout)
-        .then((result) {
-      if (result["apiList"] is! List) throw Exception("Invalid response");
-
-      final List apis = result["apiList"] ?? [];
-      return DVoteGatewayStatus(
-          true, result["health"] ?? 0, apis.cast<String>().toList());
-    }).catchError((err) {
-      print(err.toString());
-      return DVoteGatewayStatus(false, 0, <String>[]);
-    });
-  }
-
-  /// Determines whether the given URL responds to `HTTP GET /ping`
-  static Future<bool> _checkPing(String gatewayUri, {int timeout = 6}) {
-    final uri = Uri.parse(gatewayUri);
-    final completer = Completer<bool>();
-    final pingUrl = uri.hasPort
-        ? "https://${uri.host}:${uri.port}/ping"
-        : "https://${uri.host}/ping";
-
-    // Request
-    http.get(Uri.parse(pingUrl)).then((response) {
-      completer.complete(response.statusCode == 200 && response.body == "pong");
-    }).catchError((err) {
-      completer.complete(false);
-    });
-
-    // Fail after timeout
-    Timer(Duration(seconds: timeout), () {
-      if (!completer.isCompleted) completer.complete(false);
-    });
-
-    return completer.future;
-  }
-
-  /// Determines whether the current DVote Gateway supports the API set that includes the given method.
-  /// NOTE: `updateStatus()` must have been called on the GW instnace previously.
-  bool supportsMethod(String method) {
-    if (DVoteApiList.file.contains(method))
-      return this.supportedApis.contains("file");
-    else if (DVoteApiList.census.contains(method))
-      return this.supportedApis.contains("census");
-    else if (DVoteApiList.vote.contains(method))
-      return this.supportedApis.contains("vote");
-    else if (DVoteApiList.results.contains(method))
-      return this.supportedApis.contains("results");
-    return false;
-  }
-}
-
-/// Contains the status information of a vocdoni-node gateway
-class DVoteGatewayStatus {
-  int health;
-  List<String> supportedApis;
-  bool isUp;
-  DVoteGatewayStatus(this.isUp, this.health, this.supportedApis);
 }
 
 /// RANDOM

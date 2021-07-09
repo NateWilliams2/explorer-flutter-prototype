@@ -20,18 +20,20 @@ class NavigationBarTabletDesktop extends HookWidget {
         mainAxisAlignment: MainAxisAlignment.start,
         children: <Widget>[
           NavBarLogo(),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              NavButton("Home", HomeRoute, navigator),
-              NavButton("Blocks", BlocksRoute, navigator),
-              NavButton("Transactions", TransactionsRoute, navigator),
-              NavButton("Entities", EntitiesRoute, navigator),
-              NavButton("Processes", ProcessesRoute, navigator),
-              NavButton("Validators", ValidatorsRoute, navigator),
-              NavButton("Stats", StatsRoute, navigator),
-            ],
-          )
+          Expanded(
+            child: Row(
+              mainAxisSize: MainAxisSize.max,
+              children: <Widget>[
+                NavButton("Home", HomeRoute, navigator),
+                NavButton("Blocks", BlocksRoute, navigator),
+                NavButton("Transactions", TransactionsRoute, navigator),
+                NavButton("Entities", EntitiesRoute, navigator),
+                NavButton("Processes", ProcessesRoute, navigator),
+                NavButton("Validators", ValidatorsRoute, navigator),
+                NavButton("Stats", StatsRoute, navigator),
+              ],
+            ),
+          ),
         ],
       ),
     );

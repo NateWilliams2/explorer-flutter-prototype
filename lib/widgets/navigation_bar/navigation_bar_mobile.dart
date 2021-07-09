@@ -15,7 +15,7 @@ class NavigationBarMobile extends StatelessWidget {
         children: <Widget>[
           IconButton(
             icon: Icon(Icons.menu),
-            onPressed: () {},
+            onPressed: () => Scaffold.maybeOf(context)?.openDrawer(),
           ),
         ],
       ),
